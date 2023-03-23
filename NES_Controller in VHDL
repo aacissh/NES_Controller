@@ -1,0 +1,270 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity top_level_test is
+    Port ( 
+        reset : in  STD_LOGIC;
+        clk_100mhz : in  STD_LOGIC;
+        buttonSel : in STD_LOGIC;
+        buttonled : out  STD_LOGIC_VECTOR (3 downto 0);
+        nes_latch : out  STD_LOGIC;
+        nes_pulse : out  STD_LOGIC;
+        nes_data_in : in  STD_LOGIC);
+        
+end top_level_test;
+
+architecture behavioral of top_level_test is
+    type state_type is (state_idle, state_Btn_A, state_Btn_A1, state_Btn_B, state_Btn_B1, state_Select, state_Select_1,state_Start, state_Start_1, 
+    state_Up, state_Up1,state_Down, state_Down1, state_Left, state_Left_1, state_Right, state_Right1);
+    signal state, next_state : state_type;
+    signal cnt: integer range 0 to 99999;
+
+begin
+    process(clk_100mhz, reset)
+    begin
+        if reset = '1' then
+            state <= state_idle;
+            cnt <= 0;
+        elsif rising_edge(clk_100mhz) then
+         state <= next_state;
+         if cnt >= 10100 then
+           cnt <= 0;
+          
+         else
+         cnt <= cnt +1 ;
+         end if;
+         end if;               
+            end process;
+         
+process (state, cnt, nes_data_in)
+begin
+        case state is
+        when state_idle =>
+            nes_latch <= '0';
+            nes_pulse <= '0';
+            
+            next_state <= state_Btn_A;
+            
+      when state_Btn_A =>
+        if cnt >= 500 then
+          nes_latch <= '1';
+          nes_pulse <= '0';
+          if buttonSel = '1' then
+           buttonled(0) <= nes_data_in;
+         
+           end if;
+          next_state <= state_Btn_A1;
+         else 
+            next_state <= state_idle;
+            end if;
+      
+        
+      when state_Btn_A1 =>
+        if cnt >= 1700 then
+        nes_latch <= '0';
+        nes_pulse <= '0';
+        if buttonSel = '1' then
+           buttonled(0) <= nes_data_in;
+           
+           end if;
+        next_state <= state_Btn_B;
+        else 
+        next_state <= state_Btn_A;
+        end if;
+        
+      when state_Btn_B =>
+        if cnt >= 2300 then
+          nes_latch <= '0';
+          nes_pulse <= '1';
+		if buttonSel = '1' then
+           buttonled(1) <=  nes_data_in;
+           
+         
+           end if;
+        next_state <= state_Btn_B1;
+        else 
+        next_state <= state_Btn_A1;
+        end if;
+        
+        when state_Btn_B1 =>
+        if cnt >= 2900 then
+          nes_latch <= '0';
+          nes_pulse <= '0';
+          if buttonSel = '1' then
+           buttonled(1) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Select;
+         else
+           next_state <= state_Btn_B;
+        end if;
+        
+        when state_Select =>
+        if cnt >= 3500 then
+          nes_latch <= '0';
+          nes_pulse <= '1';
+          if buttonSel = '1' then
+           buttonled(2) <=  nes_data_in;
+           
+           end if;
+          next_state <= state_Select_1;
+        else 
+        next_state <= state_Btn_B1;
+        end if;
+        
+        when state_Select_1 =>
+        if cnt >= 4100 then
+          nes_latch <= '0';
+          nes_pulse <= '0';
+         if buttonSel = '1' then
+           buttonled(2) <=  nes_data_in;
+           
+           end if;
+          next_state <= state_Start;
+         else
+            next_state <= state_Select;
+        end if;
+        
+        when state_Start =>
+        if cnt >= 4700 then
+            nes_latch <='0';
+          nes_pulse <= '1';
+          if buttonSel = '1' then
+           buttonled(3) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Start_1;
+        else
+            next_state <= state_Select_1;
+        end if;
+        
+        when state_Start_1 =>
+        if cnt >= 5300 then
+        nes_latch <= '0';
+          nes_pulse <= '0';
+        if buttonSel = '1' then
+           buttonled(3) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Up;
+          else
+          next_state <= state_Start;
+        end if;
+        
+        when state_Up =>
+        if cnt >= 5900 then
+         nes_latch <= '0';
+          nes_pulse <= '1';
+		  if buttonSel = '0' then
+           buttonled(0) <=  nes_data_in;
+           
+           end if;
+          next_state <= state_Up1;
+          else
+          next_state <= state_Start_1;
+        end if;
+        
+        when state_Up1 =>
+        if cnt >= 6500 then
+          nes_latch <= '0';
+          nes_pulse <= '0';
+           if buttonSel = '0' then
+           buttonled(0) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Down;
+        else
+          next_state <= state_Up;
+        end if;   
+         
+        when state_Down =>
+        if cnt >= 7100 then
+          nes_latch <= '0';
+          nes_pulse <= '1';
+		  if buttonSel = '0' then
+           buttonled(1) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Down1;
+        else
+            next_state <= state_Up1;
+        end if;  
+        
+        when state_Down1 =>
+        if cnt >= 7700 then
+        nes_latch <= '0';
+          nes_pulse <= '0';
+        if buttonSel = '0' then
+           buttonled(1) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Left;
+         else
+          next_state <= state_Down;
+        end if; 
+         
+        when state_Left =>
+        if cnt >= 8300 then
+        nes_latch <= '0';
+          nes_pulse <= '1';
+		   if buttonSel = '0' then
+           buttonled(2) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Left_1;
+         else
+         next_state <= state_Down1;
+        end if;            
+        
+        when state_Left_1 =>
+        if cnt >= 8900 then
+            nes_latch <= '0';
+          nes_pulse <= '0';
+           if buttonSel = '0' then
+           buttonled(2) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Right;
+         else
+          next_state <= state_Left;
+        end if; 
+        
+        when state_Right =>
+        if cnt >= 9500 then
+          nes_latch <= '0';
+          nes_pulse <= '1';
+		  if buttonSel = '0' then
+           buttonled(3) <=  nes_data_in;
+           
+           
+           end if;
+          next_state <= state_Right1;
+         else
+          next_state <= state_Right1;
+        end if; 
+          
+      when state_Right1 =>
+        if cnt >= 10100 then
+          nes_latch <= '0';
+          nes_pulse <= '0';
+          if buttonSel = '0' then
+           buttonled(3) <=  nes_data_in;
+           
+           end if;
+          next_state <= state_idle;
+          else
+          next_state <= state_Right;
+        end if;
+        end case;    
+    end process;
+    
+end behavioral;
